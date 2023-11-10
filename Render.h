@@ -3,8 +3,18 @@
 #include <GLEW/GL/glew.h>
 #include "GLM/glm.hpp"
 
+#include <iostream>
+
 namespace aie
 {
+	struct Color
+	{
+		float R;
+		float G;
+		float B;
+		float A;
+	};
+
 	struct Shader
 	{
 		GLuint Program;			//	ogl program names
@@ -17,6 +27,7 @@ namespace aie
 	struct Vertex
 	{
 		glm::vec4 Pos;
+		Color Color;
 	};
 
 	//	in order to upload verts to the GPU, we need to tell OpenGL
@@ -43,5 +54,12 @@ namespace aie
 	Shader MakeShader(const char* vertSource, const char* fragSource);
 	void FreeShader(Shader& shad);
 
+	Shader LoadShader(const char* vertPath, const char* fragPath);
+	Shader LoadShader(const std::string &vertPath, const std::string &fragPath);
+
 	void Draw(const Shader& shad, const Geometry& geo);
+
+	void SetUniform(const Shader& shad, GLuint location, float value);
+	void SetUniform(const Shader& shad, GLuint location, const glm::vec4& value);
+	void SetUniform(const Shader& shad, GLuint location, const glm::mat4& value);
 }

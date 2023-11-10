@@ -1,5 +1,10 @@
 #include "Render.h"
 
+#include "GLM/gtc/type_ptr.hpp"
+#include <iostream>
+#include <fstream>
+#include <string>
+
 namespace aie
 {
 	Geometry aie::MakeGeometry(const Vertex* const verts, GLsizei vertCount, const GLuint* const indicies, GLsizei indxCount)
@@ -48,6 +53,7 @@ namespace aie
 		//	describe vertex data
 		//	enable the use of a vertex attribute at a specific index
 		glEnableVertexAttribArray(0);			//	attribute index to enable
+		glEnableVertexAttribArray(1);
 
 		//	describes data offsets for a specific vertex attribute
 		glVertexAttribPointer(0,				//	attribute index
@@ -56,6 +62,15 @@ namespace aie
 							  GL_FALSE,			//	should the data be normalized?
 							  sizeof(Vertex),	//	stride (in bytes) between verts
 							  (void*)0);		//	offset (in bytes)
+
+		//	(void*) mimics memory address (local pointer)
+
+		glVertexAttribPointer(1,
+							  4,
+							  GL_FLOAT,
+							  GL_FALSE,
+			                  sizeof(Vertex),
+							  (void*)16);
 
 		//	if we were to add new attributes to our vert structure:
 		//	we'd need to enable those attribute indices and describe them appropriately
@@ -117,10 +132,60 @@ namespace aie
 
 		return newShad;
 	}
+
 	void FreeShader(Shader& shad)
 	{
 		glDeleteProgram(shad.Program);
 		shad = {};
+	}
+
+	Shader LoadShader(const char* vertPath, const char* fragPath)
+	{
+
+		const char* *paths[] = { &vertPath, &fragPath };
+		std::string src[2];
+
+		for (int i = 0; i < 2; ++i)
+		{
+			std::ifstream file;
+			file.open(*paths[i]);
+			assert(file.is_open());
+			
+			std::string buf;
+			//	using .good() after the getline will cause the file reading to break (cut out last curly bracket at end of file)
+			while (std::getline(file, buf))
+			{
+				src[i] += buf + '\n';
+			}
+
+			file.close();
+		}
+
+		return MakeShader(src[0].c_str(), src[1].c_str());
+	}
+
+	Shader LoadShader(const std::string& vertPath, const std::string& fragPath)
+	{
+		const std::string* paths[] = { &vertPath, &fragPath };
+		std::string src[2];
+
+		for (int i = 0; i < 2; ++i)
+		{
+			std::ifstream file;
+			file.open(*paths[i]);
+			assert(file.is_open());
+
+			std::string buf;
+			//	using .good() after the getline will cause the file reading to break (cut out last curly bracket at end of file)
+			while (std::getline(file, buf))
+			{
+				src[i] += buf + '\n';
+			}
+
+			file.close();
+		}
+
+		return MakeShader(src[0].c_str(), src[1].c_str());
 	}
 	void Draw(const Shader& shad, const Geometry& geo)
 	{
@@ -131,6 +196,19 @@ namespace aie
 		glBindVertexArray(geo.Vao);
 		//	draw the geometry
 		glDrawElements(GL_TRIANGLES, geo.Size, GL_UNSIGNED_INT, 0);
+	}
+
+	void SetUniform(const Shader& shad, GLuint location, float value)
+	{
+		glProgramUniform1fv(shad.Program, location, 1, &value);
+	}
+	void SetUniform(const Shader& shad, GLuint location, const glm::vec4& value)
+	{
+		glProgramUniform4fv(shad.Program, location, 1, glm::value_ptr(value));
+	}
+	void SetUniform(const Shader& shad, GLuint location, const glm::mat4& value)
+	{
+		glProgramUniformMatrix4fv(shad.Program, location, 1, GL_FALSE, glm::value_ptr(value));
 	}
 }
 
