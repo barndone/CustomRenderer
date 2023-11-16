@@ -4,6 +4,7 @@
 //	GLM	- MATH
 
 #include "Context.h"
+#include "Object.h"
 #include "Time.h"
 #include "Render.h"
 #include "GLM/ext.hpp"
@@ -53,7 +54,13 @@ int main()
 	Geometry basicTriangleGeo = MakeGeometry(triVerts, 3, triIndices, 3);
 	Geometry basicPlaneGeo = MakeGeometry(planeVerts, 4, planeIndices, 6);
 
+	Geometry fuckaroundfindout = LoadObj("res/objs/cube.obj");
+
 	Shader basicLoadedShad = LoadShader("res/shaders/cameras.vert", "res/shaders/cameras.frag");
+
+	Object obj;	
+	obj.Geo = &fuckaroundfindout;
+	obj.shad = &basicLoadedShad;
 
 	//	create the model matrix
 	//	in this case just the identity matrix, can translate, rotate, and scale as needed
@@ -86,8 +93,10 @@ int main()
 		window.Tick();
 		window.Clear();
 
+		obj.Tick(timer.DeltaTime());
+		obj.Draw();
 		//	draw test tri
-		Draw(basicLoadedShad, basicTriangleGeo);
+		//Draw(basicLoadedShad, fuckaroundfindout);
 		//	draw test plane
 		//	Draw(basicShad, basicPlaneGeo);
 	}
