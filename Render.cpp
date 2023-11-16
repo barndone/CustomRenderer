@@ -4,9 +4,13 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <unordered_set>
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "tiny_obj_loader.h"
+
+#define STB_IMAGE_IMPLEMENTATION 1
+#include "STBI/stb_image.h"
 
 namespace aie
 {
@@ -57,8 +61,13 @@ namespace aie
 		//	enable the use of a vertex attribute at a specific index
 		glEnableVertexAttribArray(0);			//	attribute index to enable
 		glEnableVertexAttribArray(1);
+		glEnableVertexAttribArray(2);
+		glEnableVertexAttribArray(3);
+
+
 
 		//	describes data offsets for a specific vertex attribute
+		//	pos
 		glVertexAttribPointer(0,				//	attribute index
 							  4,				//	number of components
 							  GL_FLOAT,			//	type of data
@@ -67,13 +76,28 @@ namespace aie
 							  (void*)0);		//	offset (in bytes)
 
 		//	(void*) mimics memory address (local pointer)
-
+		//	UV
 		glVertexAttribPointer(1,
-							  4,
+			2,
+			GL_FLOAT,
+			GL_FALSE,
+			sizeof(Vertex),
+			(void*)16);
+
+		//	normals
+		glVertexAttribPointer(2,
+							  3,
 							  GL_FLOAT,
 							  GL_FALSE,
 			                  sizeof(Vertex),
-							  (void*)16);
+							  (void*)24);
+		//	color
+		glVertexAttribPointer(3,
+			4,
+			GL_FLOAT,
+			GL_FALSE,
+			sizeof(Vertex),
+			(void*)36);
 
 		//	if we were to add new attributes to our vert structure:
 		//	we'd need to enable those attribute indices and describe them appropriately
@@ -190,6 +214,90 @@ namespace aie
 
 		return MakeShader(src[0].c_str(), src[1].c_str());
 	}
+
+	Texture MakeTexture(unsigned width, unsigned height, unsigned channels, const unsigned char* pixels)
+	{
+		//	init texture object
+		Texture retVal = { 0, width, height, channels };
+
+		//	set up OGL channels based off of passed channel value
+		GLenum oglFormat = GL_RED;
+		switch (channels)
+		{
+		case 1:
+			oglFormat = GL_RED;
+			break;
+		case 2:
+			oglFormat = GL_RG;
+			break;
+		case 3:
+			oglFormat = GL_RGB;
+			break;
+		case 4:
+			oglFormat = GL_RGBA;
+			break;
+		}
+
+		//	begin texture creation w/ ogl
+		glGenTextures(1, &retVal.Handle);
+		glBindTexture(GL_TEXTURE_2D, retVal.Handle);
+
+		//	send the texture to the GPU
+		glTexImage2D(GL_TEXTURE_2D,     // texture type
+			0,
+			oglFormat,         // color format
+			width,             // width
+			height,            // height
+			0,
+			oglFormat,         // color format
+			GL_UNSIGNED_BYTE,  // type of data
+			pixels);           // pointer to data
+
+		//	OpenGL performs texture scaling itself so that we don't lose a 1:1 mapping between the texture's pixels and the framebuffer's pixels
+		//	for simplicity, applying linear filtering when scaling textures
+		//	for pixel art, we could apply GL_NEAREST instead
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		//	unbind texture so we don't accidentally overwrite it
+		glBindTexture(GL_TEXTURE_2D, 0);
+
+		return retVal;
+	}
+	void FreeTexture(Texture& tex)
+	{
+		glDeleteTextures(1, &tex.Handle);
+		tex = {};
+	}
+
+	Texture LoadTexture(const char* imagePath)
+	{
+		int imageWidth, imageHeight, imageFormat;
+		unsigned char* rawPixelData = nullptr;
+
+		Texture newTex = {};
+
+		//	STBI loads images w/ origin at top-left but opengl expects bottom left
+		//	to combat this, set vert flip on load to true
+		stbi_set_flip_vertically_on_load(true);
+
+		//	load the data and properties
+		rawPixelData = stbi_load(imagePath,
+			&imageWidth,
+			&imageHeight,
+			&imageFormat,
+			STBI_default);
+
+		assert(rawPixelData != nullptr && "Image failed to load.");
+		newTex = MakeTexture(imageWidth, imageHeight, imageFormat, rawPixelData);
+
+		// free data AFTER buffering texture to GPU
+		stbi_image_free(rawPixelData);
+
+		return newTex;
+	}
+
 	void Draw(const Shader& shad, const Geometry& geo)
 	{
 		//	we have to: 
@@ -205,6 +313,10 @@ namespace aie
 	{
 		glProgramUniform1fv(shad.Program, location, 1, &value);
 	}
+	void SetUniform(const Shader& shad, GLuint location, const glm::vec3& value)
+	{
+		glProgramUniform3fv(shad.Program, location, 1, glm::value_ptr(value));
+	}
 	void SetUniform(const Shader& shad, GLuint location, const glm::vec4& value)
 	{
 		glProgramUniform4fv(shad.Program, location, 1, glm::value_ptr(value));
@@ -212,6 +324,17 @@ namespace aie
 	void SetUniform(const Shader& shad, GLuint location, const glm::mat4& value)
 	{
 		glProgramUniformMatrix4fv(shad.Program, location, 1, GL_FALSE, glm::value_ptr(value));
+	}
+
+	void SetUniform(const Shader& shad, GLuint location, const Texture& value, int textureSlot)
+	{
+		// specify the texture slot we are working with
+		glActiveTexture(GL_TEXTURE0 + textureSlot);
+		// bind the texture to that slot
+		glBindTexture(GL_TEXTURE_2D, value.Handle);
+
+		// assign that texture (slot) to the shader
+		glProgramUniform1i(shad.Program, location, textureSlot);
 	}
 
 	//	wrapper for loading/generating geometry using tiny_obj_loader lib
@@ -251,28 +374,31 @@ namespace aie
 					tinyobj::real_t vy = attrib.vertices[3 * size_t(idx.vertex_index) + 1];
 					tinyobj::real_t vz = attrib.vertices[3 * size_t(idx.vertex_index) + 2];
 
-					//	// Check if `normal_index` is zero or positive. negative = no normal data
-					//	if (idx.normal_index >= 0) {
-					//		tinyobj::real_t nx = attrib.normals[3 * size_t(idx.normal_index) + 0];
-					//		tinyobj::real_t ny = attrib.normals[3 * size_t(idx.normal_index) + 1];
-					//		tinyobj::real_t nz = attrib.normals[3 * size_t(idx.normal_index) + 2];
-					//	}
-					//	
-					//	// Check if `texcoord_index` is zero or positive. negative = no texcoord data
-					//	if (idx.texcoord_index >= 0) {
-					//		tinyobj::real_t tx = attrib.texcoords[2 * size_t(idx.texcoord_index) + 0];
-					//		tinyobj::real_t ty = attrib.texcoords[2 * size_t(idx.texcoord_index) + 1];
-					//	}
-					Vertex vert = { glm::vec4(vx, vy, vz, 1), {s, v, 0, 1} };
+					// Check if `normal_index` is zero or positive. negative = no normal data
+					if (idx.normal_index >= 0) {
+						tinyobj::real_t nx = attrib.normals[3 * size_t(idx.normal_index) + 0];
+						tinyobj::real_t ny = attrib.normals[3 * size_t(idx.normal_index) + 1];
+						tinyobj::real_t nz = attrib.normals[3 * size_t(idx.normal_index) + 2];
+					}
+					
+					// Check if `texcoord_index` is zero or positive. negative = no texcoord data
+					if (idx.texcoord_index >= 0) {
+						tinyobj::real_t tx = attrib.texcoords[2 * size_t(idx.texcoord_index) + 0];
+						tinyobj::real_t ty = attrib.texcoords[2 * size_t(idx.texcoord_index) + 1];
+					}
+					Vertex vert = { glm::vec4(vx, vy, vz, 1), 
+						{ attrib.texcoords[2 * size_t(idx.texcoord_index) + 0], attrib.texcoords[2 * size_t(idx.texcoord_index) + 1] },
+						{ attrib.normals[3 * size_t(idx.normal_index) + 0], attrib.normals[3 * size_t(idx.normal_index) + 1], attrib.normals[3 * size_t(idx.normal_index) + 2]},
+						{ 1, 1, 1, 1 }
+				};
 
+					//	works by taking which face we are on multiplied by the number of verts on that face PLUS the vert num, 
+					indices.push_back(fv * f + v);
 					verts.push_back(vert);
+
 				}
+
 				index_offset += fv;
-				
-				for (int i = 0; i < shapes[s].mesh.indices.size(); ++i)
-				{
-					indices.push_back(shapes[s].mesh.indices[i].vertex_index);
-				}
 			}
 		}
 

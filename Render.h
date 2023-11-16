@@ -27,7 +27,23 @@ namespace aie
 	struct Vertex
 	{
 		glm::vec4 Pos;
+		glm::vec2 UV;
+		glm::vec3 Normal;
 		Color Color;
+
+		//	bool operator==(const Vertex& other) const {
+		//		return this->Pos == other.Pos;
+		//	}
+		//	
+		//	bool operator!=(const Vertex& other) const {
+		//		return !(*this==other);
+		//	}
+	};
+
+	struct Texture
+	{
+		GLuint Handle;				//	ogl texture name
+		unsigned Width, Height, Channels;
 	};
 
 	//	in order to upload verts to the GPU, we need to tell OpenGL
@@ -51,17 +67,25 @@ namespace aie
 							const GLuint* const indicies, GLsizei indxCount);
 	void FreeGeometry(Geometry& geo);
 
+	Geometry LoadObj(const char* filename);
+
 	Shader MakeShader(const char* vertSource, const char* fragSource);
 	void FreeShader(Shader& shad);
 
 	Shader LoadShader(const char* vertPath, const char* fragPath);
 	Shader LoadShader(const std::string &vertPath, const std::string &fragPath);
 
+	Texture MakeTexture(unsigned width, unsigned height, unsigned channels, const unsigned char* pixels);
+	void FreeTexture(Texture& tex);
+
+	Texture LoadTexture(const char* imagePath);
+
 	void Draw(const Shader& shad, const Geometry& geo);
 
 	void SetUniform(const Shader& shad, GLuint location, float value);
+	void SetUniform(const Shader& shad, GLuint location, const glm::vec3& value);
 	void SetUniform(const Shader& shad, GLuint location, const glm::vec4& value);
 	void SetUniform(const Shader& shad, GLuint location, const glm::mat4& value);
+	void SetUniform(const Shader&shad, GLuint location, const Texture &value, int textureSlot);
 
-	Geometry LoadObj(const char* filename);
 }

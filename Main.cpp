@@ -18,48 +18,15 @@ int main()
 
 	Time timer;
 
-	//	init vert positions for basic triangle
-	Vertex triVerts[] =
-	{
-		{ 
-			{ -0.5f, -0.5f, 0, 1},
-			{ 1.0f, 0, 0, 1}
-		},
-		{ 
-			{ 0.5f, -0.5f, 0, 1},
-			{ 0, 1.0f, 0, 1}
-		},
-		{ 
-			{ 0, 0.5f, 0, 1},
-			{ 0, 0, 0.0f, 1}
-		}
-	};
 
 	//	these verts are placed in clip space, which will normalized
 
-	Vertex planeVerts[] =
-	{
-		{ { -0.25f, 0.25f, 0, 1} },
-		{ { -0.25f, -0.25f, 0, 1} },
-		{ { 0.25f, -0.25f, 0, 1} },
-		{ { 0.25f, 0.25f, 0, 1} }
-	};
-
-	//	init tri indices
-	unsigned int triIndices[] = { 0, 1, 2 };
-	//	CCW winding order
-
-	unsigned int planeIndices[] = { 0, 1, 2, 0, 2, 3 };
-
-	Geometry basicTriangleGeo = MakeGeometry(triVerts, 3, triIndices, 3);
-	Geometry basicPlaneGeo = MakeGeometry(planeVerts, 4, planeIndices, 6);
-
-	Geometry fuckaroundfindout = LoadObj("res/objs/cube.obj");
-
+	Geometry soulSpear = LoadObj("res/objs/soulspear.obj");
+	Texture soulSpearTex = LoadTexture("res/textures/soulspear_diffuse.tga");
 	Shader basicLoadedShad = LoadShader("res/shaders/cameras.vert", "res/shaders/cameras.frag");
 
 	Object obj;	
-	obj.Geo = &fuckaroundfindout;
+	obj.Geo = &soulSpear;
 	obj.shad = &basicLoadedShad;
 
 	//	create the model matrix
@@ -80,25 +47,30 @@ int main()
 		1000.0f								//	far-plane
 	);
 
+	//	ambient color NOT light intensity
+	glm::vec3 ambient(0.5f, 0.5f, 0.5f);
+	glm::vec3 sunDir(-1,0,0);
+	glm::vec4 sunColor(0, 1, 0, 1);
+
 	SetUniform(basicLoadedShad, 0, cam_proj);
 	SetUniform(basicLoadedShad, 1, cam_view);
 	SetUniform(basicLoadedShad, 2, triangle_model);
+	SetUniform(basicLoadedShad, 4, soulSpearTex, 0);
+	SetUniform(basicLoadedShad, 5, ambient);
+	SetUniform(basicLoadedShad, 7, sunColor);
 
 	while (!window.ShouldClose())
 	{
 		timer.Tick();
 
 		SetUniform(basicLoadedShad, 3, timer.CurrentTime());
+		SetUniform(basicLoadedShad, 6, sunDir);
 
 		window.Tick();
 		window.Clear();
 
 		obj.Tick(timer.DeltaTime());
 		obj.Draw();
-		//	draw test tri
-		//Draw(basicLoadedShad, fuckaroundfindout);
-		//	draw test plane
-		//	Draw(basicShad, basicPlaneGeo);
 	}
 
 	window.Term();

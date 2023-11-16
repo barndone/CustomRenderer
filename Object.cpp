@@ -7,7 +7,7 @@ Object::Object()
 
 void Object::Tick(float deltaTime)
 {
-	myTransform.LocalRot *= glm::quat(glm::vec3(0, 0.15f, 0));
+	myTransform.LocalRot *= glm::quat(glm::vec3(0, 0.01f, 0));
 }
 
 void Object::Draw() const
