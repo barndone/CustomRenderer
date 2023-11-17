@@ -16,6 +16,7 @@ layout (location = 3) uniform float time;
 out vec2 vUV;
 out vec3 vNormal;
 out vec4 vertColor;
+out vec4 pos;
 
 void main()
 {
@@ -28,6 +29,8 @@ void main()
   gl_Position = proj * view * model * temp_pos;
   temp_pos.y += sin(time);
   
+  pos = temp_pos;
+
   vUV = uv;
   vertColor = colors;
   //  calculate how much of our surface is facing our direction light

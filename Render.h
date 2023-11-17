@@ -63,6 +63,14 @@ namespace aie
 		GLuint Size;			//	OGL index count
 	};
 
+	struct Light
+	{
+		glm::vec3 pos;
+		GLfloat intensity;
+		GLfloat range;
+		glm::vec4 color;
+	};
+
 	Geometry MakeGeometry(const Vertex* const verts, GLsizei vertCount,
 							const GLuint* const indicies, GLsizei indxCount);
 	void FreeGeometry(Geometry& geo);
@@ -89,5 +97,6 @@ namespace aie
 	void SetUniform(const Shader&shad, GLuint location, const Texture &value, int textureSlot);
 
 	void PassSpawnedLights(const char* fragPath, const char* updatedFrag, int valueToAdd);
+	void SetUniformBlock(const Shader& shad, GLuint location, Light* lights[]);
 
 }

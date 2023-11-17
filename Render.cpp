@@ -366,6 +366,41 @@ namespace aie
 		newFrag.close();
 	}
 
+	void SetUniformBlock(const Shader& shad, GLuint location, Light* passLights[])
+	{
+		//	step 1: get index of the uniform block
+		GLuint blockIndex = glGetUniformBlockIndex(shad.Program, "LightBlock");
+
+
+		//	step 2: allocate space for the buffer
+		GLint blockSize;
+		glGetActiveUniformBlockiv(shad.Program, blockIndex, GL_UNIFORM_BLOCK_DATA_SIZE, &blockSize);
+
+		GLubyte* blockBuffer;
+		blockBuffer = (GLubyte* )malloc(blockSize);
+
+		//	step 3: query for the offset of each variable within the block (needed with std140?)
+		//	const GLchar* names[] = {"lights"};
+		//	GLuint indices[1];
+		//	glGetUniformIndices(shad.Program, 1, names, indices);
+		//	
+		//	GLint offset[1];
+		//	glGetActiveUniformsiv(shad.Program, 1, indices, GL_UNIFORM_OFFSET, offset);
+
+		//	step 4: place the data into the buffer at the appropriate offsets (not needed with array)
+			
+
+		//	step 5: create the buffer object and copy the data into it
+		GLuint uboHandle;
+		glGenBuffers(1, &uboHandle);
+		glBindBuffer(GL_UNIFORM_BUFFER, uboHandle);
+		glBufferData(GL_UNIFORM_BUFFER, blockSize, passLights, GL_DYNAMIC_DRAW);
+
+		//	step 6: bind the buffer object to the uniform buffer binding pointing at the index specified in frag
+		glBindBufferBase(GL_UNIFORM_BUFFER, 0, uboHandle);
+	
+	}
+
 	//	wrapper for loading/generating geometry using tiny_obj_loader lib
 	Geometry LoadObj(const char* filename)
 	{
