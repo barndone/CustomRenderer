@@ -88,4 +88,6 @@ namespace aie
 	void SetUniform(const Shader& shad, GLuint location, const glm::mat4& value);
 	void SetUniform(const Shader&shad, GLuint location, const Texture &value, int textureSlot);
 
+	void PassSpawnedLights(const char* fragPath, const char* updatedFrag, int valueToAdd);
+
 }

@@ -23,6 +23,7 @@ int main()
 
 	Geometry soulSpear = LoadObj("res/objs/soulspear.obj");
 	Texture soulSpearTex = LoadTexture("res/textures/soulspear_diffuse.tga");
+	PassSpawnedLights("res/shaders/template.frag", "res/shaders/cameras.frag", 10);
 	Shader basicLoadedShad = LoadShader("res/shaders/cameras.vert", "res/shaders/cameras.frag");
 
 	Object obj;	

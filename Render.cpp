@@ -337,6 +337,35 @@ namespace aie
 		glProgramUniform1i(shad.Program, location, textureSlot);
 	}
 
+	void PassSpawnedLights(const char* fragPath, const char* updatedFrag, int valueToAdd)
+	{
+		std::string const& toReplace = "%%n%%";
+
+		std::ifstream frag;
+		frag.open(fragPath, std::ifstream::out);
+		assert(frag.is_open());
+
+		std::ofstream newFrag(updatedFrag);
+
+		std::string buf;
+		while (std::getline(frag, buf))
+		{
+			std::size_t pos = buf.find(toReplace);
+			if (pos == std::string::npos)
+			{
+				newFrag << buf << std::endl;
+			}
+			else
+			{
+
+				buf.replace(pos, toReplace.length(), std::to_string(valueToAdd));
+				newFrag << buf << std::endl;
+			}
+		}
+		frag.close();
+		newFrag.close();
+	}
+
 	//	wrapper for loading/generating geometry using tiny_obj_loader lib
 	Geometry LoadObj(const char* filename)
 	{

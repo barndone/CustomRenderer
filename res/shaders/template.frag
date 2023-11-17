@@ -14,7 +14,7 @@ layout (location = 4) uniform sampler2D albedo;
 layout (location = 5) uniform vec3 ambientLight;
 layout (location = 6) uniform vec3 lightDir;
 layout (location = 7) uniform vec4 dirLightColor;
-layout (location = 8) uniform vec4 lights[10];
+layout (location = 8) uniform vec4 lights[%%n%%];
 
 in vec2 vUV;
 in vec3 vNormal;
