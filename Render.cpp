@@ -154,6 +154,18 @@ namespace aie
 		glAttachShader(newShad.Program, frag);
 		glLinkProgram(newShad.Program);
 
+		GLint program_linked;
+		glGetProgramiv(newShad.Program, GL_LINK_STATUS, &program_linked);
+
+		if (program_linked != GL_TRUE)
+		{
+			GLsizei log_length = 0;
+			GLchar message[1024];
+			glGetProgramInfoLog(newShad.Program, 1024, &log_length, message);
+			std::cerr << message << std::endl;
+		}
+
+
 		glDeleteShader(vert);
 		glDeleteShader(frag);
 
@@ -366,7 +378,7 @@ namespace aie
 		newFrag.close();
 	}
 
-	void SetUniformBlock(const Shader& shad, GLuint location, Light* passLights[])
+	void SetUniformBlock(Shader& shad, GLuint location, Light* passLights[])
 	{
 		//	step 1: get index of the uniform block
 		GLuint blockIndex = glGetUniformBlockIndex(shad.Program, "LightBlock");
@@ -388,17 +400,28 @@ namespace aie
 		//	glGetActiveUniformsiv(shad.Program, 1, indices, GL_UNIFORM_OFFSET, offset);
 
 		//	step 4: place the data into the buffer at the appropriate offsets (not needed with array)
-			
-
+		
 		//	step 5: create the buffer object and copy the data into it
 		GLuint uboHandle;
 		glGenBuffers(1, &uboHandle);
+		UB handle = { };
+		handle.uboHandle = uboHandle;
+		shad.uBuffers.push_back(handle);
 		glBindBuffer(GL_UNIFORM_BUFFER, uboHandle);
 		glBufferData(GL_UNIFORM_BUFFER, blockSize, passLights, GL_DYNAMIC_DRAW);
 
 		//	step 6: bind the buffer object to the uniform buffer binding pointing at the index specified in frag
 		glBindBufferBase(GL_UNIFORM_BUFFER, 0, uboHandle);
 	
+	}
+
+	void UpdateUniformBlocks(const Shader& shad)
+	{
+		for (int i = 0; i < shad.uBuffers.size(); ++i)
+		{
+			glBindBuffer(GL_UNIFORM_BUFFER, shad.uBuffers[i].uboHandle);
+			glBindBuffer(GL_UNIFORM_BUFFER, 0);
+		}
 	}
 
 	//	wrapper for loading/generating geometry using tiny_obj_loader lib

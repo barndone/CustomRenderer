@@ -8,5 +8,7 @@ public:
 
 	LightObj(aie::Light light);
 
+	float waveSpeed = 5.0f;
+
 	virtual void Tick(float deltaTime) override;
 };

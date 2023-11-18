@@ -59,5 +59,8 @@
     <ClInclude Include="LightObj.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="UniformBlock.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

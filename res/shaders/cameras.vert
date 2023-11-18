@@ -16,7 +16,7 @@ layout (location = 3) uniform float time;
 out vec2 vUV;
 out vec3 vNormal;
 out vec4 vertColor;
-out vec4 pos;
+out vec3 pos;
 
 void main()
 {
@@ -27,9 +27,9 @@ void main()
 
   vec4 temp_pos = position;
   gl_Position = proj * view * model * temp_pos;
-  temp_pos.y += sin(time);
+  //temp_pos.y += sin(time);
   
-  pos = temp_pos;
+  pos = vec3(model * position);
 
   vUV = uv;
   vertColor = colors;

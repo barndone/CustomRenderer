@@ -4,6 +4,8 @@
 #include "GLM/glm.hpp"
 
 #include <iostream>
+#include "UniformBlock.h"
+#include <vector>
 
 namespace aie
 {
@@ -18,7 +20,7 @@ namespace aie
 	struct Shader
 	{
 		GLuint Program;			//	ogl program names
-
+		std::vector<UB> uBuffers;
 		//	shader programs are objects containing one or more shaders
 		//	requiring only the vertex shader at minimum (some shaders don't need to emit fragments)
 		//	it can even contain other shaders like the fragment, geometry, or tesselation shaders but are not required to!
@@ -65,11 +67,10 @@ namespace aie
 
 	struct Light
 	{
-		glm::vec3 pos;
-		GLfloat intensity;
-		GLfloat range;
+		glm::vec4 pos_range;
 		glm::vec4 color;
 	};
+
 
 	Geometry MakeGeometry(const Vertex* const verts, GLsizei vertCount,
 							const GLuint* const indicies, GLsizei indxCount);
@@ -97,6 +98,6 @@ namespace aie
 	void SetUniform(const Shader&shad, GLuint location, const Texture &value, int textureSlot);
 
 	void PassSpawnedLights(const char* fragPath, const char* updatedFrag, int valueToAdd);
-	void SetUniformBlock(const Shader& shad, GLuint location, Light* lights[]);
-
+	void SetUniformBlock(Shader& shad, GLuint location, Light* lights[]);
+	void UpdateUniformBlocks(const Shader& shad);
 }

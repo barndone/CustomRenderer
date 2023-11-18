@@ -25,31 +25,20 @@ int main()
 	Geometry soulSpear = LoadObj("res/objs/soulspear.obj");
 	Texture soulSpearTex = LoadTexture("res/textures/soulspear_diffuse.tga");
 
-	Light lightA;
-	lightA.pos = {-1, 0, 0};
-	lightA.intensity = 1.0f;
-	lightA.range = 100.0f;
-	lightA.color = { 0, 0, 1, 1 };
-	auto uhh = sizeof(Light);
+	Geometry cube = LoadObj("res/objs/cube.obj");
 
-	//	Light lightB;
-	//	lightB.pos = { -2, 0, 0 };
-	//	lightB.intensity = 2.0f;
-	//	lightB.range = 5.0f;
-	//	lightB.color = { 1, 0, 0, 1 };
+	Light lightA;
+	lightA.pos_range = {-1.0f, 0.0f, 0.0f, 5.0f};
+	lightA.color = { 1.0f, 0.0f, 0.0f, 1.0f };
 
 	Light *lights[] = { &lightA};
 
 	PassSpawnedLights("res/shaders/template.frag", "res/shaders/cameras.frag", 1);
 	Shader basicLoadedShad = LoadShader("res/shaders/cameras.vert", "res/shaders/cameras.frag");
 
-
-
 	Object obj;	
 	obj.Geo = &soulSpear;
 	obj.shad = &basicLoadedShad;
-
-	LightObj *lA = new LightObj(lightA);
 
 	//	create the model matrix
 	//	in this case just the identity matrix, can translate, rotate, and scale as needed
@@ -58,7 +47,7 @@ int main()
 	//	create the view matrix
 	glm::mat4 cam_view = glm::lookAt(
 		glm::vec3(0,1,20),					//	eye vector (where is the camera?)
-		glm::vec3(0,5,0),					//	look at vector (what is the camera looking at?)
+		glm::vec3(0,6,0),					//	look at vector (what is the camera looking at?)
 		glm::vec3(0,1,0)					//	the up vector (relative to the camera)
 	);
 	//	create the projection matrix
@@ -70,9 +59,9 @@ int main()
 	);
 
 	//	ambient color NOT light intensity
-	glm::vec3 ambient(0.5f, 0.5f, 0.5f);
-	glm::vec3 sunDir(0,0,1);
-	glm::vec4 sunColor(1, 0, 0, 0);
+	glm::vec3 ambient(0.2f, 0.2f, 0.2f);
+	glm::vec3 sunDir(0,1,0);
+	glm::vec4 sunColor(1, 0, 0, 1);
 
 	SetUniform(basicLoadedShad, 0, cam_proj);
 	SetUniform(basicLoadedShad, 1, cam_view);
@@ -81,11 +70,17 @@ int main()
 	SetUniform(basicLoadedShad, 5, ambient);
 	SetUniform(basicLoadedShad, 7, sunColor);
 
+	SetUniformBlock(basicLoadedShad, 0, lights);
+
+	LightObj light(lightA);
+	light.Geo = &cube;
+	light.shad = &basicLoadedShad;
+
 	while (!window.ShouldClose())
 	{
 		timer.Tick();
 
-		SetUniformBlock(basicLoadedShad, 0, lights);
+		UpdateUniformBlocks(basicLoadedShad);
 		SetUniform(basicLoadedShad, 3, timer.CurrentTime());
 		SetUniform(basicLoadedShad, 6, sunDir);
 
@@ -93,8 +88,9 @@ int main()
 		window.Clear();
 
 		obj.Tick(timer.DeltaTime());
-		lA->Tick(timer.CurrentTime());
+		light.Tick(timer.CurrentTime());
 		obj.Draw();
+		light.Draw();
 	}
 
 	window.Term();
