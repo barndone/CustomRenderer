@@ -2,7 +2,7 @@
 // this is run for each fragment to the screen (basically each pixel for now)
 #version 430 core
 
-#define NR_LIGHTS 1
+#define NR_LIGHTS 3
 
 struct Light
 {
@@ -17,7 +17,7 @@ layout (location = 7) uniform vec4 dirLightColor;
 
 layout (binding = 0) uniform LightBlock
 {
-  Light lights[1];
+  Light lights[3];
 }; 
 
 
@@ -51,8 +51,8 @@ void main()
   for (int i = 0; i < NR_LIGHTS; ++i)
   pointDiffuse += CalcPointLight(lights[i], vNormal, pos);
 
-  //outColor.xyz = base.xyz * (ambientLight + diffuse + pointDiffuse);
-  outColor.xyz = pointDiffuse;
+  outColor.xyz = base.xyz * (ambientLight + diffuse + pointDiffuse);
+  //outColor.xyz = pointDiffuse;
   outColor.a = base.a;
 };
 
@@ -62,8 +62,8 @@ vec3 CalcPointLight(Light light, vec3 normal, vec3 fragPos)
   float diffuse = max(0, dot(normal, direction));
   float dist = sqrt(length(light.pos_range.xyz - fragPos));
   float attenuation = abs(1.0 - (dist / light.pos_range.w));
-  //vec3 d = light.color.xyz * diffuse;
-  vec3 d = vec3(1,1,1) * diffuse;
+  vec3 d = light.color.xyz * diffuse;
+  //vec3 d = vec3(1,1,1) * diffuse;
 
   return d * vec3(1,1,1);
 }

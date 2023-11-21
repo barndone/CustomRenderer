@@ -98,6 +98,6 @@ namespace aie
 	void SetUniform(const Shader&shad, GLuint location, const Texture &value, int textureSlot);
 
 	void PassSpawnedLights(const char* fragPath, const char* updatedFrag, int valueToAdd);
-	void SetUniformBlock(Shader& shad, GLuint location, Light* lights[]);
+	void SetUniformBlock(Shader& shad, GLuint location, Light lights[]);
 	void UpdateUniformBlocks(const Shader& shad);
 }

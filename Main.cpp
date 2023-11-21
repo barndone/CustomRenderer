@@ -28,12 +28,22 @@ int main()
 	Geometry cube = LoadObj("res/objs/cube.obj");
 
 	Light lightA;
-	lightA.pos_range = {-1.0f, 0.0f, 0.0f, 5.0f};
-	lightA.color = { 1.0f, 0.0f, 0.0f, 1.0f };
+	lightA.pos_range = {1.0f, 0.0f, 0.0f, 0.5f};
+	lightA.color = { 0.0f, 0.0f, 0.0f, 1.0f };
 
-	Light *lights[] = { &lightA};
+	Light lightB;
+	lightB.pos_range = { -1.0f, 0.0f, 0.0f, 0.5f };
+	lightB.color = { 0.0f, 1.0f, 0.0f, 1.0f };
 
-	PassSpawnedLights("res/shaders/template.frag", "res/shaders/cameras.frag", 1);
+	Light lightC;
+	lightC.pos_range = { 0.0f, 1.0f, 0.0f, 0.5f };
+	lightC.color = { 0.0f, 0.0f, 1.0f, 1.0f };
+
+	Light lights[] = { lightA, lightB, lightC };
+
+	auto meow = sizeof(lights);
+
+	PassSpawnedLights("res/shaders/template.frag", "res/shaders/cameras.frag", 3);
 	Shader basicLoadedShad = LoadShader("res/shaders/cameras.vert", "res/shaders/cameras.frag");
 
 	Object obj;	

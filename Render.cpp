@@ -378,7 +378,7 @@ namespace aie
 		newFrag.close();
 	}
 
-	void SetUniformBlock(Shader& shad, GLuint location, Light* passLights[])
+	void SetUniformBlock(Shader& shad, GLuint location, Light passLights[])
 	{
 		//	step 1: get index of the uniform block
 		GLuint blockIndex = glGetUniformBlockIndex(shad.Program, "LightBlock");
@@ -387,7 +387,7 @@ namespace aie
 		//	step 2: allocate space for the buffer
 		GLint blockSize;
 		glGetActiveUniformBlockiv(shad.Program, blockIndex, GL_UNIFORM_BLOCK_DATA_SIZE, &blockSize);
-
+		//auto meow = sizeof(passLights);
 		GLubyte* blockBuffer;
 		blockBuffer = (GLubyte* )malloc(blockSize);
 
